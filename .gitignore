@@ -4,8 +4,6 @@
 #!/.git/*
 !/test/
 !.gitignore
-!bot.py
-!config.py
-!users.db
+!*.py
+!*.db
 !users
-!bot.db
