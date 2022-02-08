@@ -1,6 +1,7 @@
 /*
-!/.git
-!/.git/*
+#!/.git
+#!/.git/*
+!/test/
 !.gitignore
 !bot.py
 !config.py
