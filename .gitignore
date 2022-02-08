@@ -1,0 +1,9 @@
+/*
+!/.git
+!/.git/*
+!.gitignore
+!bot.py
+!config.py
+!users.db
+!users
+!bot.db
