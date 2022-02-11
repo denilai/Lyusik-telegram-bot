@@ -1,10 +1,10 @@
 #
 /*
-config.py
 #!/.git
 #!/.git/*
 !/test/
 !.gitignore
 !*.py
+config.py
 !*.db
 !users
