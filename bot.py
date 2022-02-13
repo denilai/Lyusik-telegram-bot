@@ -16,18 +16,12 @@ logging.basicConfig(level=logging.DEBUG)
 
 conn = sqlite3.connect('users.db')
 cur = conn.cursor()
-#cur.execute('SELECT * FROM GUEST;')
-#record = cur.fetchall()
-#print("Версия базы данных SQLite: ", record)
-#sqlite_select_query = "select sqlite_version();"
-#cur.execute(sqlite_select_query)
-#record = cur.fetchall()
-#print("Версия базы данных SQLite: ", record)
 
 bot = Bot(token=config.TOKEN)
 dp = Dispatcher(bot, storage = MemoryStorage())
 
-question_counter = 1
+#link to current asked question 
+current_question_id = 1
 
 @dp.message_handler(commands=['start'])
 async def cmd_start(message: types.Message):
@@ -40,20 +34,20 @@ async def greeting(message: types.Message, state = FSMContext):
   await states.BotState.next()
   await message.answer(md.text(
     md.text('Привет,',message.text+'!'), 
-    md.text('Сейчас тебя будет ждать приятный сюрприз!'),
+    md.text('Тебя ждет приятный сюрприз!'),
     md.text('Тебе предстоит пройти викторину, в которую будут входить вопросы от твоих гостей. Будь внимательна!'),
     md.text('Чтобы начать виктрорину, нажми кнопку', md.bold('"Старт"'), '!'),
-    md.text('Чтобы завершить общение со мной, введи',md.bold('"/cancel"')),
+    md.text('Чтобы завершить общение со мной, нажми на кнопку',md.bold('"Конец"')),
     sep='\n'
   ),reply_markup=kb.start_markup, parse_mode=ParseMode.MARKDOWN)
-  await message.reply('{}, чтобы начать викторину, введи "Старт")'.format(message.text),reply_markup = kb.start_markup)
+  await message.answer('{}, чтобы начать викторину, введи "Старт")'.format(message.text),reply_markup = kb.start_markup)
 
 
 @dp.message_handler(state='*', commands='cancel')
 @dp.message_handler(Text(equals='конец', ignore_case=True), state='*')
 async def cancel_handler(message: types.Message, state: FSMContext):
-  global question_counter
-  question_counter=1
+  global current_question_id
+  current_question_id=1
   current_state=await state.get_state()
   if current_state is None:
     return
@@ -65,15 +59,15 @@ async def cancel_handler(message: types.Message, state: FSMContext):
 
 @dp.message_handler(state=states.BotState.waiting_for_begin_of_quiz)
 async def begin_quiz(message: types.Message, state:FSMContext):
-  global question_counter
+  global current_question_id
   if message.text.upper() != 'СТАРТ': 
-    await message.reply('Чтобы начать викторину, введи "Старт")',reply_markup = kb.start_markup)
+    await message.reply('Чтобы начать викторину, нажми "Старт")',reply_markup = kb.start_markup)
     return
   await states.BotState.next()
   await message.answer('Поехали!!!')
-  question= db.Question(question_counter)
+  question= db.Question(current_question_id)
   await message.answer(question.question, reply_markup=question.variants_markup) 
-  #await state.update_data(question_counter=question_counter+1)
+  #await state.update_data(current_question_id=current_question_id+1)
 
 #@dp.message_handler(state=states.BotState.waiting_for_begin_of_quiz)
 #async def wrong_cmd(message: types.Message, state:FSMContext):
@@ -82,29 +76,27 @@ async def begin_quiz(message: types.Message, state:FSMContext):
 @dp.message_handler(state=states.BotState.waiting_for_end_of_quiz)
 async def answer(message: types.Message, state: FSMContext):
   user_data = await state.get_data()
-  global question_counter
-  question= db.Question(question_counter)
-  #previous_question= db.Question(question_counter-1)
+  global current_question_id
+  question= db.Question(current_question_id)
   logging.info('Сравниваем '+message.text.upper()+' '+ question.right_answer.upper())
-  logging.info(question_counter)
+  logging.info('До обработки сообщенияi: ', current_question_id)
   if message.text.upper()==question.right_answer.upper():
     await message.reply('Верно!')
-    if question_counter  >= question.question_count:
+    if current_question_id  >= question.question_count:
+      states.BotState.show_result.set()
       await show_result(message, state)
       return
-    question_counter+=1
-    logging.info(question_counter)
+    current_question_id+=1
   else:
-    await message.reply('В этот раз не повезло..(')
-  logging.info(question_counter)
-  next_question= db.Question(question_counter)
+    await message.reply('В этот раз не повезло( Попробуем еще?')
+  logging.info('После обработки сообщения: ',current_question_id)
+  next_question= db.Question(current_question_id)
   await message.answer(next_question.question, reply_markup=next_question.variants_markup) 
 
 
-@dp.message_handler()
+@dp.message_handler(state=states.BotState.show_result)
 async def show_result(message: types.Message, state:FSMContext):
   user_data = await state.get_data()
-  await message.answer('sdfsdf')
   await message.answer("Ты ответила на все вопросы! Поздравляю, {}!".format(user_data['username']),reply_markup=kb.remove_markup)
   await cancel_handler(message, state)
 
