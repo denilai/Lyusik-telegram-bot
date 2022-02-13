@@ -18,4 +18,6 @@ class Question:
     for answer in self.wrong_answers:
       self.variants_markup.add(KeyboardButton(answer[0]))
     self
+    cur.execute('select count(distinct question_id) from questions')
+    self.question_count = cur.fetchone()[0] 
 

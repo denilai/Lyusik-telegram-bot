@@ -46,11 +46,14 @@ async def greeting(message: types.Message, state = FSMContext):
     md.text('Чтобы завершить общение со мной, введи',md.bold('"/cancel"')),
     sep='\n'
   ),reply_markup=kb.start_markup, parse_mode=ParseMode.MARKDOWN)
+  await message.reply('{}, чтобы начать викторину, введи "Старт")'.format(message.text),reply_markup = kb.start_markup)
 
 
 @dp.message_handler(state='*', commands='cancel')
 @dp.message_handler(Text(equals='конец', ignore_case=True), state='*')
 async def cancel_handler(message: types.Message, state: FSMContext):
+  global question_counter
+  question_counter=1
   current_state=await state.get_state()
   if current_state is None:
     return
@@ -60,17 +63,25 @@ async def cancel_handler(message: types.Message, state: FSMContext):
   await message.reply('Завершаем сеанс', reply_markup=kb.remove_markup)
 
 
-@dp.message_handler(Text(equals='Старт', ignore_case=True), state=states.BotState.waiting_for_begin_of_quiz)
+@dp.message_handler(state=states.BotState.waiting_for_begin_of_quiz)
 async def begin_quiz(message: types.Message, state:FSMContext):
   global question_counter
+  if message.text.upper() != 'СТАРТ': 
+    await message.reply('Чтобы начать викторину, введи "Старт")',reply_markup = kb.start_markup)
+    return
   await states.BotState.next()
   await message.answer('Поехали!!!')
   question= db.Question(question_counter)
   await message.answer(question.question, reply_markup=question.variants_markup) 
   #await state.update_data(question_counter=question_counter+1)
 
+#@dp.message_handler(state=states.BotState.waiting_for_begin_of_quiz)
+#async def wrong_cmd(message: types.Message, state:FSMContext):
+# await(message.answer(  
+
 @dp.message_handler(state=states.BotState.waiting_for_end_of_quiz)
 async def answer(message: types.Message, state: FSMContext):
+  user_data = await state.get_data()
   global question_counter
   question= db.Question(question_counter)
   #previous_question= db.Question(question_counter-1)
@@ -78,6 +89,9 @@ async def answer(message: types.Message, state: FSMContext):
   logging.info(question_counter)
   if message.text.upper()==question.right_answer.upper():
     await message.reply('Верно!')
+    if question_counter  >= question.question_count:
+      await show_result(message, state)
+      return
     question_counter+=1
     logging.info(question_counter)
   else:
@@ -86,6 +100,13 @@ async def answer(message: types.Message, state: FSMContext):
   next_question= db.Question(question_counter)
   await message.answer(next_question.question, reply_markup=next_question.variants_markup) 
 
+
+@dp.message_handler()
+async def show_result(message: types.Message, state:FSMContext):
+  user_data = await state.get_data()
+  await message.answer('sdfsdf')
+  await message.answer("Ты ответила на все вопросы! Поздравляю, {}!".format(user_data['username']),reply_markup=kb.remove_markup)
+  await cancel_handler(message, state)
 
 @dp.message_handler(content_types=[types.ContentType.ANIMATION])
 async def echo_document(message: types.Message):
