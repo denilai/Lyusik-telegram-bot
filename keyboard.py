@@ -20,3 +20,5 @@ haskell_markup = ReplyKeyboardMarkup(
 ).add(KeyboardButton("Haskell")).add(KeyboardButton("Haskell")).add(KeyboardButton("Haskell"))
 
 
+start_markup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add(KeyboardButton("Старт")).add(KeyboardButton("Конец"))
+remove_markup=ReplyKeyboardRemove() 
