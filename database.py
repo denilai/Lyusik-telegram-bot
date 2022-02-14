@@ -24,5 +24,5 @@ class Question:
     media_record = cur.fetchall()
     self.media_list = []
     for row in media_record:
-      self.media_list.append(row[1])
+      self.media_list.append((row[1],))
 

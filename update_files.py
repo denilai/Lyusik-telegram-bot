@@ -39,7 +39,7 @@ async def uploadMediaFiles(folder, method, file_attr):
             else:
                 file_id = getattr(msg, file_attr).file_id
             session = Session()
-            newItem = MediaIds(file_id=file_id, filename=filename)
+            newItem = MediaIds(file_id=file_id, filename=filename, file_type=file_attr)
             try:
                 session.add(newItem)
                 session.commit()

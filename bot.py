@@ -14,6 +14,7 @@ from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import State, StatesGroup
 
 AVATAR = 'AgACAgIAAxkDAAIGHWIKJFlRiW8SC8Dj_okcVKCfW0oLAAJyuDEb941QSHRliukKdqP5AQADAgADeAADIwQ'
+VIDEO = 'BAACAgIAAxkDAAIHTWILX-Y4_wkzbRAp5-6XsfU-ivC9AAITFQACJRRZSFKSAxWmOKXOIwQ'
 
 logging.basicConfig(level=logging.INFO)
 
@@ -37,6 +38,10 @@ async def process_photo_cmd (message: types.Message, state:FSMContext):
   caption = 'Вот аватар бота! :red_heart:'
   await bot.send_photo(message.from_user.id,AVATAR, caption=emojize(caption), reply_to_message_id=message.message_id) 
 
+@dp.message_handler(commands='video')
+async def process_video_cmd (message: types.Message):
+  caption = 'Вот тебе видосик :red_heart:'
+  await bot.send_video(message.from_user.id, VIDEO, caption = emojize(caption), reply_to_message_id=message.message_id)
 
 
 @dp.message_handler(commands=['start'])

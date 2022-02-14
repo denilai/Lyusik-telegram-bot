@@ -10,3 +10,4 @@ class MediaIds(Base):
     id = Column(Integer, primary_key=True)
     file_id = Column(String(255))
     filename = Column(String(255))
+    file_type = Column(String(255))
