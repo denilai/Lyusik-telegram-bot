@@ -21,6 +21,13 @@ create table if not exists user_stat (
   right  boolean not null
 );
 
+create table if not exists question_media (
+  id integer not null primary key, 
+  question_id integer not null references question(question_id) on delete cascade on update cascade,
+  media_type text not null, 
+  filename text not null references media_ids(filename) on delete cascade on update cascade,
+  check (media_type  in ('image', 'audio', 'file'))
+);
 
 --insert into questions (question_text, right_answer) values 
 --("В какой стране родился Арнольд Шварцнеггер?", "Австрия"),
@@ -39,4 +46,7 @@ create table if not exists user_stat (
 
 --insert into users (name) values ("Наташа"), ("Даша");
 
-
+insert into question_media (question_id, media_type, filename) values
+(1, 'image', 'zima.jpg'),
+(1, 'audio', 'zima.jpg'),
+(3, 'image', 'z')

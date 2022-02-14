@@ -20,4 +20,9 @@ class Question:
     self
     cur.execute('select count(distinct question_id) from questions')
     self.question_count = cur.fetchone()[0] 
+    cur.execute('select media_type, filename from question_media where question_id = ?',(id,))
+    media_record = cur.fetchall()
+    self.media_list = []
+    for row in media_record:
+      self.media_list.append(row[1])
 
