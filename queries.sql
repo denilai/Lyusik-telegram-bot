@@ -14,12 +14,12 @@ create table if not exists users (
   name text not null 
 );
 
-create table if not exists user_stat (
-  id integer not null references users(user_id) on delete cascade on update cascade,
-  question_id not null references questions(question_id) on delete cascade on update cascade,
-  answer_text text not null,
-  right  boolean not null
-);
+--create table if not exists user_stat (
+--  id integer not null references users(user_id) on delete cascade on update cascade,
+--  question_id not null references questions(question_id) on delete cascade on update cascade,
+--  answer_text text not null,
+--  right  boolean not null
+--);
 
 
 create table if not exists media_ids (
@@ -35,6 +35,15 @@ create table if not exists question_media (
   media_type string not null, 
   filename text not null references media_ids(filename) on delete cascade on update cascade,
   check (media_type  in ('image', 'audio', 'file'))
+);
+
+create table if not exists log (
+  id integer not null primary key,  
+  timestamp timestamp, 
+  user text,  
+  question text, 
+  answer text,
+  is_right boolean
 );
 
 --insert into questions (question_text, right_answer) values 

@@ -1,0 +1,100 @@
+PRAGMA foreign_keys=OFF;
+BEGIN TRANSACTION;
+CREATE TABLE questions (
+  question_id integer primary key autoincrement, 
+  question_text text not null,
+  right_answer text not null
+);
+INSERT INTO questions VALUES(1,'В какой стране родился Арнольд Шварцнеггер?','Австрия');
+INSERT INTO questions VALUES(2,'Сколько граммов в килограмме?','1000');
+INSERT INTO questions VALUES(3,'Какого цвета маслины?','Черного');
+CREATE TABLE wrong_answers (
+  answer_id integer primary key,
+  question_id integer not null references squestions(question_id) on delete cascade on update cascade,
+  answer_text text not null
+);
+INSERT INTO wrong_answers VALUES(1,2,'200');
+INSERT INTO wrong_answers VALUES(2,2,'90');
+INSERT INTO wrong_answers VALUES(3,3,'Желтого');
+INSERT INTO wrong_answers VALUES(4,3,'Зеленого');
+INSERT INTO wrong_answers VALUES(5,1,'Россия');
+INSERT INTO wrong_answers VALUES(6,1,'Америка');
+INSERT INTO wrong_answers VALUES(7,1,'Австралия');
+CREATE TABLE users (
+user_id integer primary key not null,
+name text not null);
+INSERT INTO users VALUES(1,'Наташа');
+INSERT INTO users VALUES(2,'Даша');
+INSERT INTO users VALUES(3,'Pleddd');
+CREATE TABLE question_media (
+  id integer not null primary key, 
+  question_id integer not null references question(question_id) on delete cascade on update cascade,
+  media_type string not null, 
+  filename text not null references media_ids(filename) on delete cascade on update cascade,
+  check (media_type  in ('image', 'audio', 'file'))
+);
+CREATE TABLE media_ids (
+  id integer not null primary key,
+  file_id string,
+  filename string,
+  file_type  string
+);
+INSERT INTO media_ids VALUES(1,'AgACAgIAAxkDAAIHSGILX-QBJJqyPtpmXvcbzVJY0ngOAAKhtzEbJRRZSCbAJwUHEcMCAQADAgADdwADIwQ','cent4.png','photo');
+INSERT INTO media_ids VALUES(2,'AgACAgIAAxkDAAIHSWILX-RTILPcnGicbQfzkAAB7-iSQAACorcxGyUUWUi553Ax9wABgP4BAAMCAAN5AAMjBA','cent1.png','photo');
+INSERT INTO media_ids VALUES(3,'AgACAgIAAxkDAAIHSmILX-UvWdJM3JpTXJcqH2qipI12AAKjtzEbJRRZSJRg8F-IIePgAQADAgADeQADIwQ','cent2.png','photo');
+INSERT INTO media_ids VALUES(4,'AgACAgIAAxkDAAIHS2ILX-WBdFkyuHQLg0Encl-2TeOWAAJyuDEb941QSHRliukKdqP5AQADAgADeAADIwQ','botavatar.jpg','photo');
+INSERT INTO media_ids VALUES(5,'AgACAgIAAxkDAAIHTGILX-aW06xOHK4NBFkOOVn2ppsUAAKktzEbJRRZSPLW3B2wDdgGAQADAgADeQADIwQ','cent3.png','photo');
+INSERT INTO media_ids VALUES(6,'BAACAgIAAxkDAAIHTWILX-Y4_wkzbRAp5-6XsfU-ivC9AAITFQACJRRZSFKSAxWmOKXOIwQ','piter.MOV','video');
+INSERT INTO media_ids VALUES(7,'AgACAgIAAxkDAAIHTmILX-ZovHJotVdIEBsSzZIY-bsNAAJzuDEb941QSLfLHcCZtWOAAQADAgADdwADIwQ','zima.jpg','photo');
+CREATE TABLE log (
+  id integer not null primary key,  
+  timestamp timestamp, 
+  user text,  
+  question text, 
+  answer text,
+  is_right boolean
+);
+INSERT INTO log VALUES(1,'2022-02-15 15:42:30.555423','d','В какой стране родился Арнольд Шварцнеггер?','Австрия',1);
+INSERT INTO log VALUES(2,'2022-02-15 15:47:30.985749','Наташа','В какой стране родился Арнольд Шварцнеггер?','Австралия',0);
+INSERT INTO log VALUES(3,'2022-02-15 15:47:32.633728','Наташа','В какой стране родился Арнольд Шварцнеггер?','Америка',0);
+INSERT INTO log VALUES(4,'2022-02-15 15:47:33.846249','Наташа','В какой стране родился Арнольд Шварцнеггер?','Австрия',1);
+INSERT INTO log VALUES(5,'2022-02-15 15:47:35.130250','Наташа','Сколько граммов в килограмме?','90',0);
+INSERT INTO log VALUES(6,'2022-02-15 15:47:36.266229','Наташа','Сколько граммов в килограмме?','1000',1);
+INSERT INTO log VALUES(7,'2022-02-15 15:47:37.620395','Наташа','Какого цвета маслины?','Зеленого',0);
+INSERT INTO log VALUES(8,'2022-02-15 15:47:39.154476','Наташа','Какого цвета маслины?','Черного',1);
+INSERT INTO log VALUES(9,'2022-02-15 16:09:10.117054','d','В какой стране родился Арнольд Шварцнеггер?','Австралия',0);
+INSERT INTO log VALUES(10,'2022-02-15 16:09:12.871305','d','В какой стране родился Арнольд Шварцнеггер?','Америка',0);
+INSERT INTO log VALUES(11,'2022-02-15 16:09:13.721783','d','В какой стране родился Арнольд Шварцнеггер?','Россия',0);
+INSERT INTO log VALUES(12,'2022-02-15 16:09:14.701614','d','В какой стране родился Арнольд Шварцнеггер?','Австрия',1);
+INSERT INTO log VALUES(13,'2022-02-15 16:09:15.914730','d','Сколько граммов в килограмме?','1000',1);
+INSERT INTO log VALUES(14,'2022-02-15 16:09:17.079762','d','Какого цвета маслины?','Зеленого',0);
+INSERT INTO log VALUES(15,'2022-02-15 16:09:17.874437','d','Какого цвета маслины?','Черного',1);
+INSERT INTO log VALUES(16,'2022-02-15 16:10:12.531773','Оля','В какой стране родился Арнольд Шварцнеггер?','Америка',0);
+INSERT INTO log VALUES(17,'2022-02-15 16:10:13.852667','Оля','В какой стране родился Арнольд Шварцнеггер?','Австрия',1);
+INSERT INTO log VALUES(18,'2022-02-15 16:10:14.940929','Оля','Сколько граммов в килограмме?','90',0);
+INSERT INTO log VALUES(19,'2022-02-15 16:10:15.759500','Оля','Сколько граммов в килограмме?','1000',1);
+INSERT INTO log VALUES(20,'2022-02-15 16:10:16.677436','Оля','Какого цвета маслины?','Зеленого',0);
+INSERT INTO log VALUES(21,'2022-02-15 16:10:18.091903','Оля','Какого цвета маслины?','Черного',1);
+INSERT INTO log VALUES(22,'2022-02-15 16:11:54.876812','d','В какой стране родился Арнольд Шварцнеггер?','Австрия',1);
+INSERT INTO log VALUES(23,'2022-02-15 16:11:55.955227','d','Сколько граммов в килограмме?','90',0);
+INSERT INTO log VALUES(24,'2022-02-15 16:11:56.934130','d','Сколько граммов в килограмме?','1000',1);
+INSERT INTO log VALUES(25,'2022-02-15 16:12:00.666508','d','Какого цвета маслины?','Черного',1);
+INSERT INTO log VALUES(26,'2022-02-15 16:13:47.538830','jkz','В какой стране родился Арнольд Шварцнеггер?','Америка',0);
+INSERT INTO log VALUES(27,'2022-02-15 16:13:54.415643','jkz','В какой стране родился Арнольд Шварцнеггер?','Австралия',0);
+INSERT INTO log VALUES(28,'2022-02-15 16:13:59.091873','jkz','В какой стране родился Арнольд Шварцнеггер?','Австрия',1);
+INSERT INTO log VALUES(29,'2022-02-15 16:26:49.802576','Коля','В какой стране родился Арнольд Шварцнеггер?','Австралия',0);
+INSERT INTO log VALUES(30,'2022-02-15 16:26:51.046299','Коля','В какой стране родился Арнольд Шварцнеггер?','Америка',0);
+INSERT INTO log VALUES(31,'2022-02-15 16:26:52.356240','Коля','В какой стране родился Арнольд Шварцнеггер?','Австрия',1);
+INSERT INTO log VALUES(32,'2022-02-15 16:26:53.374157','Коля','Сколько граммов в килограмме?','90',0);
+INSERT INTO log VALUES(33,'2022-02-15 16:26:54.303308','Коля','Сколько граммов в килограмме?','1000',1);
+INSERT INTO log VALUES(34,'2022-02-15 16:26:55.167502','Коля','Какого цвета маслины?','Зеленого',0);
+INSERT INTO log VALUES(35,'2022-02-15 16:26:56.102117','Коля','Какого цвета маслины?','Черного',1);
+INSERT INTO log VALUES(36,'2022-02-15 16:28:53.827753','Даша','В какой стране родился Арнольд Шварцнеггер?','Америка',0);
+INSERT INTO log VALUES(37,'2022-02-15 16:28:54.708592','Даша','В какой стране родился Арнольд Шварцнеггер?','Австрия',1);
+INSERT INTO log VALUES(38,'2022-02-15 16:28:55.520944','Даша','Сколько граммов в килограмме?','90',0);
+INSERT INTO log VALUES(39,'2022-02-15 16:28:56.425468','Даша','Сколько граммов в килограмме?','1000',1);
+INSERT INTO log VALUES(40,'2022-02-15 16:28:57.245369','Даша','Какого цвета маслины?','Зеленого',0);
+INSERT INTO log VALUES(41,'2022-02-15 16:28:58.038780','Даша','Какого цвета маслины?','Черного',1);
+DELETE FROM sqlite_sequence;
+INSERT INTO sqlite_sequence VALUES('questions',3);
+COMMIT;
