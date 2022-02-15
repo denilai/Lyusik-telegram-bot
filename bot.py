@@ -41,26 +41,43 @@ current_question_id : int = 1
 async def process_photo_cmd (message: types.Message, state:FSMContext):
   caption = 'Вот аватар бота! :red_heart:'
   await bot.send_photo(message.from_user.id,AVATAR, caption=emojize(caption), reply_to_message_id=message.message_id) 
+  logging.info('Process /photo command')
 
 @dp.message_handler(commands='video', state='*')
 async def process_video_cmd (message: types.Message):
   caption = 'Вот тебе видосик :red_heart:'
   await bot.send_video(message.from_user.id, VIDEO, caption = emojize(caption), reply_to_message_id=message.message_id)
+  logging.info('Process /video command')
 
 
-@dp.message_handler(commands=['start'], state='*')
-@dp.message_handler(state=None)
-async def cmd_start(message : types.Message, state=FSMContext):
+@dp.message_handler(commands='start', state='*')
+#@dp.message_handler(state=None)
+async def process_start_cmd(message : types.Message, state=FSMContext):
   #me = Me[1213239688, '@denilai']
   #await bot.send_message(1213239688,'dfsfds)
+  await process_help_cmd(message)
   await message.answer('Привет! Введи свое имя', reply_markup=kb.remove_markup)
   await states.BotState.waiting_for_name.set()
   logging.info(message.chat.id)
+  logging.info('Process /start command')
+
+@dp.message_handler(commands='help', state='*')
+async def process_help_cmd(message: types.Message):
+  await message.answer(md.text(
+    'Я Люсик! Бот, который проводит викторины, часть моего функционала сейчас в разработке.',
+    'Мне очень приятно поблолтать с тобой!',
+    'Вот, что я умею:',
+    '/help - вывести эту справку',
+    '/start - начать виктронину',
+    '/video - отправить тестовое видео',
+    '/photo - отправить тестовое фото',
+    '/cancel - закончить викторину',sep='\n'))
+  logging.info('Process /help command')
 
 
 @dp.message_handler(state='*', commands='cancel')
 @dp.message_handler(Text(equals='конец', ignore_case=True), state='*')
-async def cancel_handler(message: types.Message, state: FSMContext):
+async def process_cancel_cmd(message: types.Message, state: FSMContext):
   global current_question_id
   current_question_id=1
   current_state=await state.get_state()
@@ -69,6 +86,7 @@ async def cancel_handler(message: types.Message, state: FSMContext):
   logging.info('Canceling state %r', current_state)
   await state.finish()
   await message.answer('Завершаем сеанс', reply_markup=kb.remove_markup)
+  logging.info('Process /cancel command')
  
 #@dp.message_handler(state='*')
 ##@dp.message_handler(commands=['myCommand'], commands_prefix='!/')
@@ -103,7 +121,7 @@ async def begin_quiz(message: types.Message, state:FSMContext):
   await states.BotState.next()
   await message.answer('Поехали!!!')
   user_data=await state.get_data()
-  question= db.QuestionMaster(current_question_id, user_data['username'])
+  question= db.QuestionMaster(current_question_id, user_data['username'], message.from_user.id)
   await message.answer(question.media_list)
   await message.answer(question.question, reply_markup=question.variants_markup) 
   #await state.update_data(current_question_id=current_question_id+1)
@@ -116,7 +134,7 @@ async def begin_quiz(message: types.Message, state:FSMContext):
 async def quiz(message: types.Message, state: FSMContext):
   global current_question_id
   user_data=await state.get_data()
-  question= db.QuestionMaster(current_question_id, user_data['username'])
+  question= db.QuestionMaster(current_question_id, user_data['username'], message.from_user.id)
   logging.info('---\nСравниваем '+message.text.upper()+' '+ question.right_answer.upper())
   logging.info('До обработки сообщения: {}'.format(current_question_id))
   question.set_user_answer(message.text)
@@ -132,7 +150,7 @@ async def quiz(message: types.Message, state: FSMContext):
   else:
     await message.reply('В этот раз не повезло( Попробуем еще?')
   logging.info('После обработки сообщения: {}'.format(current_question_id))
-  next_question= db.QuestionMaster(current_question_id, user_data['username'])
+  next_question= db.QuestionMaster(current_question_id, user_data['username'], message.from_user.id)
   await message.answer(next_question.question, reply_markup=next_question.variants_markup) 
 
 
@@ -140,7 +158,7 @@ async def quiz(message: types.Message, state: FSMContext):
 async def show_result(message: types.Message, state:FSMContext):
   user_data = await state.get_data()
   await message.answer("Ты ответила на все вопросы! Поздравляю, {}!".format(user_data['username']),reply_markup=kb.remove_markup)
-  await cancel_handler(message, state)
+  await process_cancel_cmd(message, state)
 
 @dp.message_handler(content_types=[types.ContentType.ANIMATION])
 async def echo_document(message: types.Message):

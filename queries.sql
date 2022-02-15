@@ -40,6 +40,7 @@ create table if not exists question_media (
 create table if not exists log (
   id integer not null primary key,  
   timestamp timestamp, 
+  user_id integer,
   user text,  
   question text, 
   answer text,
