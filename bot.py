@@ -65,7 +65,7 @@ async def process_start_cmd(message : types.Message, state=FSMContext):
 async def process_help_cmd(message: types.Message):
   await message.answer(md.text(
     'Я Люсик! Бот, который проводит викторины, часть моего функционала сейчас в разработке.',
-    'Мне очень приятно поблолтать с тобой!',
+    'Мне очень приятно поболтать с тобой!',
     'Вот, что я умею:',
     '/help - вывести эту справку',
     '/start - начать виктронину',
@@ -135,6 +135,7 @@ async def quiz(message: types.Message, state: FSMContext):
   global current_question_id
   user_data=await state.get_data()
   question= db.QuestionMaster(current_question_id, user_data['username'], message.from_user.id)
+  logging.info('Current question counter = {}'.format(current_question_id))
   logging.info('---\nСравниваем '+message.text.upper()+' '+ question.right_answer.upper())
   logging.info('До обработки сообщения: {}'.format(current_question_id))
   question.set_user_answer(message.text)
@@ -142,14 +143,14 @@ async def quiz(message: types.Message, state: FSMContext):
   question.log()
   if question.user_is_right:
     await message.reply('Верно!')
-    if current_question_id  >= question.question_count:
-      await states.BotState.show_result.set()
-      await show_result(message, state)
-      return
-    current_question_id+=1
   else:
     await message.reply('В этот раз не повезло( Попробуем еще?')
+  current_question_id+=1
   logging.info('После обработки сообщения: {}'.format(current_question_id))
+  if current_question_id  > question.question_count:
+    await states.BotState.show_result.set()
+    await show_result(message, state)
+    return
   next_question= db.QuestionMaster(current_question_id, user_data['username'], message.from_user.id)
   await message.answer(next_question.question, reply_markup=next_question.variants_markup) 
 
