@@ -7,10 +7,11 @@ conn = sqlite3.connect('users.db')
 cur = conn.cursor()
 
 class QuestionMaster:
-  def __init__ (self, id, username, user_id):
+  def __init__ (self, id, username, user_id, location):
     self.user_id=user_id
     self.username = username
-    cur.execute('select question_text, right_answer from questions where question_id = ?',(id,))
+    self.location = location
+    cur.execute('select question_text, right_answer from (select row_number() over(order by question_id) rn, * from questions where location = ?) where rn = ?',(location,id))
     quest_record = cur.fetchone()
     self.question = quest_record[0]
     self.right_answer = quest_record[1]

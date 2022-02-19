@@ -1,3 +1,4 @@
+import re
 import config
 import sqlite3
 import logging
@@ -100,7 +101,7 @@ async def greeting(message: types.Message, state = FSMContext):
   #    return 
   db.UserMaster.add_user(message.text)
   await state.update_data(username=message.text)
-  await states.BotState.next()
+  await states.BotState.waiting_for_begin_of_quiz.set()
   await message.answer(md.text(
     md.text('Привет,',message.text+'!'), 
     md.text('Тебя ждет приятный сюрприз!'),
@@ -112,6 +113,42 @@ async def greeting(message: types.Message, state = FSMContext):
   await message.answer('{}, чтобы начать викторину, нажми "Старт")'.format(message.text),reply_markup = kb.start_markup)
 
 
+
+@dp.message_handler(state=states.BotState.waiting_for_begin_of_quiz)
+async def correct_begining(message: types.Message, state: FSMContext):
+  if message.text.upper() != 'СТАРТ': 
+    await message.reply('Чтобы начать викторину, нажми "Старт"\nЧтобы закончить сеанс, нажми "Конец"',reply_markup = kb.start_markup)
+    return
+  await message.answer("Введи название локации")
+  await states.BotState.waiting_for_location.set()
+
+
+
+async def first_setup(message: types.Message, state: FSMContext):
+  user_data=await state.get_data()
+  question= db.QuestionMaster(current_question_id, user_data['username'], message.from_user.id,'diller')
+  await message.answer(question.media_list)
+  await message.answer(question.question, reply_markup=question.variants_markup) 
+
+
+@dp.message_handler(state=states.BotState.waiting_for_location)
+async def enter_location(message: types.Message, state: FSMContext):
+  diller_list = [r'.ил{1,2}ер', r'.ухня',r'[Нн]аркоман(ка)',]
+  chem_list = [r'[Хх]имики?',r'[Лл]аборатория']
+  shtirlez_list = [r'[Шш]тирлец',r'[Дд]етектив']
+  mihal_list = [r'[Мм]ихалыч',r'[Мм]ихайлович']
+  if map(lambda x :re.search(x,message.text),diller_list):
+    logging.info('first')
+    await first_setup(message, state)
+  if map(lambda x :re.search(x,message.text),chem_list):
+    logging.info('second')
+  if map(lambda x :re.search(x,message.text),shtirlez_list):
+    logging.info('third')
+  if map(lambda x :re.search(x,message.text),mihal_list):
+    logging.info('fouth')
+
+
+
 @dp.message_handler(state=states.BotState.waiting_for_begin_of_quiz)
 async def begin_quiz(message: types.Message, state:FSMContext):
   global current_question_id
@@ -121,7 +158,7 @@ async def begin_quiz(message: types.Message, state:FSMContext):
   await states.BotState.next()
   await message.answer('Поехали!!!')
   user_data=await state.get_data()
-  question= db.QuestionMaster(current_question_id, user_data['username'], message.from_user.id)
+  question= db.QuestionMaster(current_question_id, user_data['username'], message.from_user.id, 'diller')
   await message.answer(question.media_list)
   await message.answer(question.question, reply_markup=question.variants_markup) 
   #await state.update_data(current_question_id=current_question_id+1)
@@ -134,7 +171,7 @@ async def begin_quiz(message: types.Message, state:FSMContext):
 async def quiz(message: types.Message, state: FSMContext):
   global current_question_id
   user_data=await state.get_data()
-  question= db.QuestionMaster(current_question_id, user_data['username'], message.from_user.id)
+  question= db.QuestionMaster(current_question_id, user_data['username'], message.from_user.id,'diller')
   logging.info('Current question counter = {}'.format(current_question_id))
   logging.info('---\nСравниваем '+message.text.upper()+' '+ question.right_answer.upper())
   logging.info('До обработки сообщения: {}'.format(current_question_id))
@@ -144,14 +181,14 @@ async def quiz(message: types.Message, state: FSMContext):
   if question.user_is_right:
     await message.reply('Верно!')
   else:
-    await message.reply('В этот раз не повезло( Попробуем еще?')
+    await message.reply('В этот раз не повезло(( Придется выполнить наказание от Крёстного отца')
   current_question_id+=1
   logging.info('После обработки сообщения: {}'.format(current_question_id))
   if current_question_id  > question.question_count:
     await states.BotState.show_result.set()
     await show_result(message, state)
     return
-  next_question= db.QuestionMaster(current_question_id, user_data['username'], message.from_user.id)
+  next_question= db.QuestionMaster(current_question_id, user_data['username'], message.from_user.id,'diller')
   await message.answer(next_question.question, reply_markup=next_question.variants_markup) 
 
 
