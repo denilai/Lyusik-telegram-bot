@@ -47,8 +47,9 @@ class QuestionMaster:
     question_count_rec = cur.fetchone() 
     if question_count_rec !=[] and question_count_rec != None:
       self.question_count = question_count_rec[0]
-    cur.execute('select media_type, filename from question_media where question_id = ?' ,(self.question_id,))
+    cur.execute('select media_type, ids.file_id from question_media q join media_ids ids on  q.filename=ids.filename  where question_id = ?' ,(self.question_id,))
     media_record = cur.fetchall()
+    logging.info(media_record)
     if media_record != None and media_record != []:
       for row in media_record:
         self.media_list.append((row[0],row[1]))

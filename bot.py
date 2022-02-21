@@ -10,10 +10,11 @@ from typing import List, Awaitable, Union
 from aiogram.utils.emoji import emojize
 from aiogram.dispatcher.filters import Text
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
-from aiogram.types import ParseMode
+from aiogram.types import ParseMode, sticker
 from aiogram import Bot, Dispatcher, executor, types
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import State, StatesGroup
+from aiogram.types.message import ContentType
 
 AVATAR = 'AgACAgIAAxkDAAIGHWIKJFlRiW8SC8Dj_okcVKCfW0oLAAJyuDEb941QSHRliukKdqP5AQADAgADeAADIwQ'
 VIDEO = 'BAACAgIAAxkDAAIHTWILX-Y4_wkzbRAp5-6XsfU-ivC9AAITFQACJRRZSFKSAxWmOKXOIwQ'
@@ -34,10 +35,13 @@ dp = Dispatcher(bot, storage = MemoryStorage())
 current_question_id : int = 1
 right_answers_count : int = 0
 
-#@dp.message_handler()
-#async def process_echo (message= types.Message):
-#  logging.info(message.text)
-#  await message.answer(message.text)
+
+
+@dp.message_handler(content_types=types.ContentType.STICKER)
+async def process_echo (message=types.Sticker):
+  logging.info('this is that func {}'.format(message.content_type))
+  await bot.send_sticker(config.MY_ID, r"CAACAgIAAxkBAAED-31iFBUGBMMNSD3Lf4h7aKtrLPE78gACoxAAAvF3qEh-OxgSw5fVQSME")
+  await bot.send_sticker(config.MY_ID, message.sticker.file_id)
 
 @dp.message_handler(commands='photo', state='*')
 async def process_photo_cmd (message: types.Message, state:FSMContext):
@@ -147,6 +151,10 @@ async def first_setup(message: types.Message, state: FSMContext):
     await message.answer('Нет вопросов для данной локации')
   if question.media_list==[]:
     logging.info('Нет вложений')
+  else:
+    for record in media_list:
+      if record[0]=='photo':
+        await bot.send_photo(message.from_user.id, record[1]) 
 
 
 @dp.message_handler(state=states.BotState.waiting_for_location)
@@ -236,6 +244,12 @@ async def quiz(message: types.Message, state: FSMContext):
   else:
     await message.answer('Нет вопросов для данной локации')
 
+  if question.media_list==[]:
+    logging.info('Нет вложений')
+  else:
+    for record in media_list:
+      if record[0]=='photo':
+        await bot.send_photo(message.from_user.id, record[1]) 
 
 @dp.message_handler(lambda message: not message.text.__contains__('/'), state=states.BotState.show_result)
 async def show_result(message: types.Message, state:FSMContext):
@@ -243,9 +257,6 @@ async def show_result(message: types.Message, state:FSMContext):
   await message.answer("Ты ответила на все вопросы! Поздравляю, {}!".format(user_data['username']),reply_markup=kb.remove_markup)
   await process_cancel_cmd(message, state)
 
-@dp.message_handler(content_types=[types.ContentType.ANIMATION])
-async def echo_document(message: types.Message):
-    await message.reply_animation(message.animation.file_id)
 
 
 
