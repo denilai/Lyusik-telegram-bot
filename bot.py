@@ -152,7 +152,7 @@ async def first_setup(message: types.Message, state: FSMContext):
   if question.media_list==[]:
     logging.info('Нет вложений')
   else:
-    for record in media_list:
+    for record in question.media_list:
       if record[0]=='photo':
         await bot.send_photo(message.from_user.id, record[1]) 
 
@@ -206,7 +206,7 @@ async def enter_location(message: types.Message, state: FSMContext):
 #  await message.answer(question.question, reply_markup=question.variants_markup) 
 #  #await state.update_data(current_question_id=current_question_id+1)
 
-#@dp.message_handler(state=states.BotState.waiting_for_begin_of_quiz)
+#@dpquestion..message_handler(state=states.BotState.waiting_for_begin_of_quiz)
 #async def wrong_cmd(message: types.Message, state:FSMContext):
 # await(message.answer(  
 
@@ -244,12 +244,16 @@ async def quiz(message: types.Message, state: FSMContext):
   else:
     await message.answer('Нет вопросов для данной локации')
 
-  if question.media_list==[]:
-    logging.info('Нет вложений')
+  if next_question.media_list==[]:
+    logging.info('Нет вложений к вопросу {}'.format(question.question_text))
   else:
-    for record in media_list:
+    for record in next_question.media_list:
       if record[0]=='photo':
         await bot.send_photo(message.from_user.id, record[1]) 
+      if record[0]=='video':
+        await bot.send_video(message.from_user.id, record[1])
+      if record[0]=='file':
+        await bot.send_file(message.from_user.id, record[1])
 
 @dp.message_handler(lambda message: not message.text.__contains__('/'), state=states.BotState.show_result)
 async def show_result(message: types.Message, state:FSMContext):
