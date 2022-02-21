@@ -7,29 +7,51 @@ conn = sqlite3.connect('users.db')
 cur = conn.cursor()
 
 class QuestionMaster:
-  def __init__ (self, id, username, user_id, location):
+  def __init__ (self, current_id, username, user_id, location):
+    self.id = current_id
     self.user_id=user_id
     self.username = username
     self.location = location
-    cur.execute('select question_text, right_answer from (select row_number() over(order by question_id) rn, * from questions where location = ?) where rn = ?',(location,id))
-    quest_record = cur.fetchone()
-    self.question = quest_record[0]
-    self.right_answer = quest_record[1]
-    cur.execute('select * from (select answer_text a from wrong_answers where question_id = ? union select right_answer from questions where question_id = ?) order by a', (id,id))
-    self.wrong_answers = cur.fetchall()
-    self.variants_markup= ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-    for answer in self.wrong_answers:
-      self.variants_markup.add(KeyboardButton(answer[0]))
-    self
-    cur.execute('select count(distinct question_id) from questions')
-    self.question_count = cur.fetchone()[0] 
-    cur.execute('select media_type, filename from question_media where question_id = ?',(id,))
-    media_record = cur.fetchall()
-    self.media_list = []
-    for row in media_record:
-      self.media_list.append((row[2],))
     self.user_answer=""
     self.user_is_right=False
+    self.variants_markup= ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+    self.media_list = []
+    self.question=""
+    self.right_answer=""
+    self.question_id = 0
+    self.question_count = 0
+    self.set_question_parameters()
+
+
+  def set_question_parameters(self):
+    cur.execute('select question_text, right_answer, question_id '+
+                'from ('+
+                'select row_number() over(order by question_id) rn, * from questions where location = ?) '+
+                'where rn = ?',(self.location,self.id))
+    quest_record = cur.fetchone()
+    logging.info('Запросы по данной локации {}'.format(quest_record))
+    if quest_record!=[] and quest_record != None:
+      self.question = quest_record[0]
+      self.right_answer = quest_record[1]
+      self.question_id = quest_record[2]
+
+    cur.execute('select * from ('+
+                'select answer_text a from wrong_answers where question_id = ? union '+
+                'select right_answer from questions where question_id = ?) '+'order by a', (self.question_id,self.question_id))
+    self.answers = cur.fetchall()
+    if self.answers != [] and self.answers != None:  
+      for answer in self.answers:
+        self.variants_markup.add(KeyboardButton(answer[0]))
+
+    cur.execute('select count(distinct question_id) from questions where location = ?',(self.location,))
+    question_count_rec = cur.fetchone() 
+    if question_count_rec !=[] and question_count_rec != None:
+      self.question_count = question_count_rec[0]
+    cur.execute('select media_type, filename from question_media where question_id = ?' ,(self.question_id,))
+    media_record = cur.fetchall()
+    if media_record != None and media_record != []:
+      for row in media_record:
+        self.media_list.append((row[0],row[1]))
     
   def set_user_answer(self, user_answer):
     self.user_answer = user_answer

@@ -42,7 +42,7 @@ create table if not exists question_media (
   question_id integer not null references question(question_id) on delete cascade on update cascade,
   media_type string not null, 
   filename text not null references media_ids(filename) on delete cascade on update cascade,
-  check (media_type  in ('image', 'audio', 'file'))
+  check (media_type  in ('image', 'audio', 'file', 'video'))
 );
 
 create table if not exists log (
@@ -61,7 +61,7 @@ create table if not exists log (
 --("Какого цвета маслины?","Черного", "chemist"),
 --("Кто убил Марка?", "Оксимирон", "shtirlez")
 
-insert into wrong_answers (question_id, answer_text) values 
+--insert into wrong_answers (question_id, answer_text) values 
 --(1,  "Россия"),
 --(1, "Америка"),
 --(1, "Австралия");
@@ -69,13 +69,13 @@ insert into wrong_answers (question_id, answer_text) values
 --(2,"90"),
 --(3,"Желтого"),
 --(3,"Зеленого"),
-(4,"Алиса"),
-(4,"Мэр");
+--(4,"Алиса"),
+--(4,"Мэр");
 
 
 --insert into users (name) values ("Наташа"), ("Даша");
 
 --insert into question_media (question_id, media_type, filename) values
 --(1, 'image', 'zima.jpg'),
---(1, 'audio', 'zima.jpg'),
---(3, 'image', 'z')
+--(1, 'image', 'botavatar.jpg'),
+--(3, 'video', 'piter.mov');
