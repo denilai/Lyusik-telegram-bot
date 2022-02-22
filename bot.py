@@ -19,9 +19,6 @@ from aiogram.types.message import ContentType
 AVATAR = 'AgACAgIAAxkDAAIGHWIKJFlRiW8SC8Dj_okcVKCfW0oLAAJyuDEb941QSHRliukKdqP5AQADAgADeAADIwQ'
 VIDEO = 'BAACAgIAAxkDAAIHTWILX-Y4_wkzbRAp5-6XsfU-ivC9AAITFQACJRRZSFKSAxWmOKXOIwQ'
 
-Me = Union [
-  int,str
-]
 
 logging.basicConfig(level=logging.INFO)
 
@@ -139,22 +136,30 @@ async def first_setup(message: types.Message, state: FSMContext):
   user_data=await state.get_data()
   global current_question_id, right_answers_count
   await reset_vars()
-  question= db.QuestionMaster(current_question_id, user_data['username'], message.from_user.id,user_data['location'])
+  await ask_question(message, current_question_id, user_data['username'], message.from_user.id,user_data['location'])
   #await message.answer(question.media_list)
   await message.answer(md.text('{}, сейчас тебе предстоит ответить на вопросы от хозяина локации.'.format(user_data['username']),
                                'Будь внимательна! Нужно овтетить на большинство вопросов, иначе тебе предстоит выполнить задание.',
                                'От  <b>Крёстного отца</b>, ничего не утаишь...','Удачи!', sep='\n'),parse_mode=types.ParseMode.HTML) 
   logging.info('first setup with location = {} and message = {}'.format(user_data['location'], message.text))
-  if question.question!=None: 
-    await message.answer(question.question, reply_markup=question.variants_markup) 
-  else:
-    await message.answer('Нет вопросов для данной локации')
+
+async def ask_question(message, current_question_id, username, user_id, location):
+  question= db.QuestionMaster(current_question_id, username, user_id, location)
   if question.media_list==[]:
     logging.info('Нет вложений')
   else:
     for record in question.media_list:
       if record[0]=='photo':
         await bot.send_photo(message.from_user.id, record[1]) 
+      if record[0]=='video':
+        await bot.send_video(message.from_user.id, record[1])
+      if record[0]=='file':
+        await bot.send_file(message.from_user.id, record[1])
+  if question.question!="": 
+    await message.answer(question.question, reply_markup=question.variants_markup) 
+  else:
+    await message.answer('Нет вопросов для данной локации')
+
 
 
 @dp.message_handler(state=states.BotState.waiting_for_location)
@@ -238,22 +243,8 @@ async def quiz(message: types.Message, state: FSMContext):
     await location_set(message, state)
     #await show_result(message, state)
     return
-  next_question= db.QuestionMaster(current_question_id, user_data['username'], message.from_user.id,'diller')
-  if next_question.question!=None:
-    await message.answer(next_question.question, reply_markup=next_question.variants_markup) 
-  else:
-    await message.answer('Нет вопросов для данной локации')
+  await ask_question(message, current_question_id, user_data['username'], message.from_user.id,user_data['location'])
 
-  if next_question.media_list==[]:
-    logging.info('Нет вложений к вопросу {}'.format(question.question_text))
-  else:
-    for record in next_question.media_list:
-      if record[0]=='photo':
-        await bot.send_photo(message.from_user.id, record[1]) 
-      if record[0]=='video':
-        await bot.send_video(message.from_user.id, record[1])
-      if record[0]=='file':
-        await bot.send_file(message.from_user.id, record[1])
 
 @dp.message_handler(lambda message: not message.text.__contains__('/'), state=states.BotState.show_result)
 async def show_result(message: types.Message, state:FSMContext):

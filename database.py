@@ -1,6 +1,5 @@
 import sqlite3, datetime
-from aiogram .types import ReplyKeyboardRemove, ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup,\
-    InlineKeyboardButton
+from aiogram .types import ReplyKeyboardRemove, ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton
 import logging
 logging.basicConfig(level=logging.INFO)
 conn = sqlite3.connect('users.db')
@@ -8,6 +7,7 @@ cur = conn.cursor()
 
 class QuestionMaster:
   def __init__ (self, current_id, username, user_id, location):
+    logging.info('Обрабатываем вопрос \ncurrent_id = {}\nusername = {}\nuser_id = {}\n location = {}'.format(current_id, username, user_id, location))
     self.id = current_id
     self.user_id=user_id
     self.username = username
@@ -21,6 +21,7 @@ class QuestionMaster:
     self.question_id = 0
     self.question_count = 0
     self.set_question_parameters()
+    self.set_media_list()
 
 
   def set_question_parameters(self):
@@ -47,7 +48,10 @@ class QuestionMaster:
     question_count_rec = cur.fetchone() 
     if question_count_rec !=[] and question_count_rec != None:
       self.question_count = question_count_rec[0]
-    cur.execute('select media_type, ids.file_id from question_media q join media_ids ids on  q.filename=ids.filename  where question_id = ?' ,(self.question_id,))
+
+
+  def set_media_list(self):
+    cur.execute('select media_type, ids.file_id from question_media q join media_ids ids on  upper(q.filename)=upper(ids.filename)  where question_id = ?' ,(self.question_id,))
     media_record = cur.fetchall()
     logging.info(media_record)
     if media_record != None and media_record != []:
