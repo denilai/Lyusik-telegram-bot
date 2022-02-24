@@ -2,7 +2,7 @@ from loader import dp, bot, types
 import commands 
 import config
 import re
-import sqlite3
+#import sqlite3
 import logging
 import keyboard as kb
 import database as db 
@@ -17,14 +17,12 @@ from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.types.message import ContentType
 
-AVATAR = 'AgACAgIAAxkDAAIGHWIKJFlRiW9SC8Dj_okcVKCfW0oLAAJyuDEb941QSHRliukKdqP5AQADAgADeAADIwQ'
-VIDEO = 'BAACAgIAAxkDAAIHTWILX-Y4_wkzbRAp5-6XsfU-ivC9AAITFQACJRRZSFKSAxWmOKXOIwQ'
 
 
 logging.basicConfig(level=logging.INFO)
 
-conn = sqlite3.connect('users.db')
-cur = conn.cursor()
+#conn = sqlite3.connect('users.db')
+#cur = conn.cursor()
 
 
 #link to current asked question 
@@ -52,11 +50,11 @@ async def process_cancel_cmd(message: types.Message, state: FSMContext):
   current_state=await state.get_state()
   if current_state is None:
     return
+  logging.info('Process /cancel command')
+  logging.info('Current state is {}'.format(current_state))
   logging.info('Canceling state %r', current_state)
   await state.finish()
-  logging.info('Current state is {}'.format(current_state))
   await message.answer('Завершаем сеанс', reply_markup=kb.remove_markup)
-  logging.info('Process /cancel command')
  
 #@dp.message_handler(state='*')
 ##@dp.message_handler(commands=['myCommand'], commands_prefix='!/')
@@ -72,14 +70,26 @@ async def greeting(message: types.Message, state = FSMContext):
   await state.update_data(username=message.text)
   await states.BotState.waiting_for_begin_of_quiz.set()
   await message.answer(md.text(
-    md.text('Привет,',message.text+'!'), 
-    md.text('Тебя ждет приятный сюрприз!'),
-    md.text('Тебе предстоит пройти викторину, в которую будут входить вопросы от твоих гостей!'),
-    md.text('Чтобы начать викторину, нажми кнопку', md.bold('"Старт"'), '!'),
-    md.text('Чтобы завершить общение со мной, нажми на кнопку',md.bold('"Конец"')),
-    sep='\n'
-  ),reply_markup=kb.start_markup, parse_mode=ParseMode.MARKDOWN)
-  await message.answer('{}, чтобы начать викторину, нажми "Старт")'.format(message.text),reply_markup = kb.start_markup)
+    md.text('Ааа, {}! Здравствуй!'.format(message.text)),
+    #md.text(message.text),
+    md.text('Я ждал твоего письма. Кирилл связался со мной.'),
+    md.text('Ох и в историю он влип. Мафия, китайцы... Не хотелось ввязываться, но я обязан ему жизнью, буквально.'),
+    md.text('Поэтому я помогу тебе в твоих поисках.'),
+    md.text('Я уже имел дела с Крёстным отцом и знаю его методы. Он большой любитель квестов. Настолько большой, что даже дела ведет, будто все это один большой квест.'),
+    md.text('Думаю, и в этот раз он приготовил что-то подобное.'), sep = '\n'))
+  await message.answer(md.text(
+    md.text('Я подключился к своему спутнику. Так, вижу тебя. Ты на даче. Хм, отличный дом!'),
+    md.text('Еще вижу довольно странных людей неподалеку от тебя. Знакомая сигнатура... Может проверишь?'),sep='\n'))
+  await message.answer(md.text(
+    md.text('Такое ощущение, будто они специально там стоят, словно в видеоигре. Может у них и задание для нас найдется? Ха-ха-ха!'),
+    md.text('Но все же нам не до смеха... Нам нужно найти сокровище, спрятaнное где-то неподалеку. И где же оно может быть?..'), sep='\n'))
+  await message.answer(md.text(
+    md.text('Крёстный отец хочет, чтобы мы играли по его правилам? Чтож, сыграем!'),
+    md.text('Ты готова?!'),sep='\n'))
+  await message.answer(md.text(
+    md.text('Чтобы отправится в путь, нажми кнопку', md.bold('"Старт"'), '!'),
+    md.text('Если ты не готова к приключению, нажми на кнопку',md.bold('"Конец"')),
+    sep='\n'),reply_markup=kb.start_markup, parse_mode=ParseMode.MARKDOWN)
 
 
 
@@ -100,11 +110,11 @@ async def first_setup(message: types.Message, state: FSMContext):
   user_data=await state.get_data()
   global current_question_id, right_answers_count
   await reset_vars()
-  await ask_question(message, current_question_id, user_data['username'], message.from_user.id,user_data['location'])
   #await message.answer(question.media_list)
   await message.answer(md.text('{}, сейчас тебе предстоит ответить на вопросы от хозяина локации.'.format(user_data['username']),
                                'Будь внимательна! Нужно овтетить на большинство вопросов, иначе тебе предстоит выполнить задание.',
                                'От  <b>Крёстного отца</b>, ничего не утаишь...','Удачи!', sep='\n'),parse_mode=types.ParseMode.HTML) 
+  await ask_question(message, current_question_id, user_data['username'], message.from_user.id,user_data['location'])
   logging.info('first setup with location = {} and message = {}'.format(user_data['location'], message.text))
 
 async def ask_question(message, current_question_id, username, user_id, location):
