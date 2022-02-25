@@ -72,6 +72,7 @@ async def greeting(message: types.Message, state = FSMContext):
   logging.info('Пользователь с именем {} начал приключение'.format(message.text))
   await state.update_data(username=message.text)
   await states.BotState.waiting_for_begin_of_quiz.set()
+  await commands.process_help_cmd(message)
   await message.answer(md.text(
     md.text(emojize('Ааа, {}! Здравствуй! :dizzy:'.format(message.text))),
     #md.text(message.text),
@@ -87,7 +88,7 @@ async def greeting(message: types.Message, state = FSMContext):
     md.text('Такое ощущение, будто они специально там стоят, словно в видеоигре. Может у них и задание для нас найдется? Ха-ха-ха!'),
     md.text(emojize('Но все же нам не до смеха... Нам нужно найти сокровище:moneybag:, спрятaнное где-то неподалеку. И где же оно может быть?..')), sep='\n'), reply_markup=kb.remove_markup)
   await message.answer(md.text(
-    md.text('Крёстный отец хочет, чтобы мы играли по его правилам? Чтож, сыграем!'),
+    md.text('Крёстный отец хочет, чтобы oмы играли по его правилам? Чтож, сыграем!'),
     md.text('Ты готова?!'),sep='\n'))
   await message.answer(md.text(
     md.text('Чтобы отправится в путь, нажми кнопку', md.bold(emojize('"Старт":green_circle:'))),
@@ -197,7 +198,7 @@ async def enter_location(message: types.Message, state: FSMContext):
     logging.info('Активирована локация "Дилер"')
     logging.info('Проверяем список посещенных мест {}'.format(visited_place))
     if 'diler' in visited_place:
-      await message.answer(emojize('Мы там уже были:check_mark_button:. Не стоит оглядываться назад)'), reply_markup=kb.remove_markup)
+      await message.answer(emojize('Мы там уже были:check_mark_button:. Не стоит оглядываться назад. Если хочешь начать путешествие заново, введи команду /cancel'), reply_markup=kb.remove_markup)
       return
     visited_place.append('diler')
     await states.BotState.waiting_for_end_of_quiz.set()

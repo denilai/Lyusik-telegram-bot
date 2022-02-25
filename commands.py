@@ -37,11 +37,11 @@ async def process_start_cmd(message : types.Message, state=FSMContext):
 async def process_help_cmd(message: types.Message):
   await message.answer(md.text(
     'Я Микки Кувыркун, частный детектив. Я вызвался помочь найти своего друга Кирилла, спасти его из лап Чертановской мафии.',
-    'Вот, что я умею:',
+    'В целях конспирации мы можем общаться зашфрованными посланиями.',
     '/help - вывести эту справку',
     '/start - начать виктронину',
-    '/video - отправить видео',
-    '/photo - отправить фото',
+   # '/video - отправить видео',
+   # '/photo - отправить фото',
     '/cancel - закончить приключение ',sep='\n'))
   logging.info('Process /help command')
 
