@@ -42,12 +42,13 @@ async def reset_vars():
   global current_question_id, right_answers_count, visited_place
   current_question_id=1
   right_answers_count=0 
-  visited_place=[]
 
 @dp.message_handler(state='*', commands='cancel')
 @dp.message_handler(Text(equals='конец', ignore_case=True), state='*')
 async def process_cancel_cmd(message: types.Message, state: FSMContext):
   await reset_vars()
+  global visited_place
+  visited_place=[]
   current_state=await state.get_state()
   if current_state is None:
     return
