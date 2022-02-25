@@ -1,6 +1,7 @@
 from aiogram import types
 from loader import dp, bot
 import aiogram.utils.markdown as md
+from aiogram.utils.emoji import emojize
 from aiogram.dispatcher import FSMContext
 import logging
 import states

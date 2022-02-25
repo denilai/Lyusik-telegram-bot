@@ -16,10 +16,12 @@ class QuestionMaster:
     self.user_is_right=False
     self.variants_markup= ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
     self.media_list = []
+    self.media_answer_list = []
     self.question=""
     self.right_answer=""
     self.question_id = 0
     self.question_count = 0
+
     self.set_question_parameters()
     self.set_media_list()
 
@@ -53,10 +55,17 @@ class QuestionMaster:
   def set_media_list(self):
     cur.execute('select media_type, ids.file_id from question_media q join media_ids ids on  upper(q.filename)=upper(ids.filename)  where question_id = ?' ,(self.question_id,))
     media_record = cur.fetchall()
-    logging.info(media_record)
+    logging.info('Медия файлы вопроса - {}'.format(media_record))
     if media_record != None and media_record != []:
       for row in media_record:
         self.media_list.append((row[0],row[1]))
+
+    cur.execute('select media_type, ids.file_id from answer_media q join media_ids ids on  upper(q.filename)=upper(ids.filename)  where question_id = ?' ,(self.question_id,))
+    media_record = cur.fetchall()
+    logging.info('Медия файлы ответа - {}'.format(media_record))
+    if media_record != None and media_record != []:
+      for row in media_record:
+        self.media_answer_list.append((row[0],row[1]))
     
   def set_user_answer(self, user_answer):
     self.user_answer = user_answer

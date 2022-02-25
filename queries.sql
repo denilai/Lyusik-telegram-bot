@@ -45,6 +45,15 @@ create table if not exists question_media (
   check (media_type  in ('photo', 'audio', 'file', 'video'))
 );
 
+create table if not exists answer_media (
+  id integer not null primary key, 
+  question_id integer not null references question(question_id) on delete cascade on update cascade,
+  media_type string not null, 
+  filename text not null references media_ids(filename) on delete cascade on update cascade,
+  check (media_type  in ('photo', 'audio', 'file', 'video'))
+);
+
+
 create table if not exists log (
   id integer not null primary key,  
   timestamp timestamp, 
@@ -76,6 +85,12 @@ create table if not exists log (
 --insert into users (name) values ("Наташа"), ("Даша");
 
 --insert into question_media (question_id, media_type, filename) values
+--(1, 'photo', 'zima.jpg'),
+--(1, 'photo', 'botavatar.jpg'),
+--(3, 'video', 'piter.mov');
+
+
+--insert into answer_media (question_id, media_type, filename) values
 --(1, 'photo', 'zima.jpg'),
 --(1, 'photo', 'botavatar.jpg'),
 --(3, 'video', 'piter.mov');
