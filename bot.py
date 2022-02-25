@@ -28,7 +28,7 @@ logging.basicConfig(level=logging.INFO)
 #link to current asked question 
 current_question_id : int = 1
 right_answers_count : int = 0
-
+visited_place : [str] = []
 
 
 @dp.message_handler(content_types=types.ContentType.STICKER)
@@ -39,9 +39,10 @@ async def process_echo (message=types.Sticker):
 
 
 async def reset_vars():
-  global current_question_id, right_answers_count
+  global current_question_id, right_answers_count, visited_place
   current_question_id=1
   right_answers_count=0 
+  visited_place=[]
 
 @dp.message_handler(state='*', commands='cancel')
 @dp.message_handler(Text(equals='конец', ignore_case=True), state='*')
@@ -67,6 +68,7 @@ async def greeting(message: types.Message, state = FSMContext):
   #    await message.answer('Имя не может содержать символа "/". Попробуешь еще раз?')
   #    return 
   db.UserMaster.add_user(message.text)
+  logging.info('Пользователь с именем {} начал приключение'.format(message.text))
   await state.update_data(username=message.text)
   await states.BotState.waiting_for_begin_of_quiz.set()
   await message.answer(md.text(
@@ -96,12 +98,13 @@ async def greeting(message: types.Message, state = FSMContext):
 @dp.message_handler(state=states.BotState.waiting_for_begin_of_quiz)
 async def correct_begining(message: types.Message, state: FSMContext):
   if message.text.upper() != 'СТАРТ': 
-    await message.reply('Чтобы начать викторину, нажми "Старт"\nЧтобы закончить сеанс, нажми "Конец"',reply_markup = kb.start_markup)
+    logging.info('Пользователь ошибся с вводом. Ожидалось "СТАРТ", получили {}'.format(message.text))
+    await message.reply('Чтобы отправится в путь, нажми кнопку "Старт"!\nЧтобы закончить приключение, нажми кнопку "Конец"',reply_markup = kb.start_markup)
     return
   await location_set(message, state)
 
 async def location_set(message: types.Message, state:FSMContext):
-  await message.answer("Введи название локации")
+  await message.answer("Помоги мне сориентироваться. Как называется место, где ты находишься? Я постараюсь узнать, что приготовил для нас Крёсный отец")
   await states.BotState.waiting_for_location.set()
 
 
@@ -111,9 +114,8 @@ async def first_setup(message: types.Message, state: FSMContext):
   global current_question_id, right_answers_count
   await reset_vars()
   #await message.answer(question.media_list)
-  await message.answer(md.text('{}, сейчас тебе предстоит ответить на вопросы от хозяина локации.'.format(user_data['username']),
-                               'Будь внимательна! Нужно овтетить на большинство вопросов, иначе тебе предстоит выполнить задание.',
-                               'От  <b>Крёстного отца</b>, ничего не утаишь...','Удачи!', sep='\n'),parse_mode=types.ParseMode.HTML) 
+  await message.answer(md.text('{}, сейчас тебе предстоит ответить на вопросы от хозяев этой местности.'.format(user_data['username']),
+    'Хитрить не выйдет. От  <b>Крёстного отца</b>, ничего не утаишь...','Удачи!', sep='\n'),parse_mode=types.ParseMode.HTML) 
   await ask_question(message, current_question_id, user_data['username'], message.from_user.id,user_data['location'])
   logging.info('first setup with location = {} and message = {}'.format(user_data['location'], message.text))
 
@@ -131,41 +133,64 @@ async def ask_question(message, current_question_id, username, user_id, location
         await bot.send_file(message.from_user.id, record[1])
   if question.question!="": 
     await message.answer(question.question, reply_markup=question.variants_markup) 
+    logging.info('Задан вопрос {} под номером {} в локации {}'.format(question.question, current_question_id, location))
   else:
     await message.answer('Нет вопросов для данной локации')
+    logging.info('Обнаружен пустой вопрос в локации {} под номером {}'.format(location, current_question_id))
 
 
 
 @dp.message_handler(state=states.BotState.waiting_for_location)
 async def enter_location(message: types.Message, state: FSMContext):
-  diller_list = [r'.ил{1,2}ер', r'.ухня',r'[Нн]аркоман(ка)?',]
+  global visited_place
+  diler_list = [r'[Дд]ил{1,2}ер', r'[Кк]ухня',r'[Нн]аркоман(ка)?',]
   chem_list = [r'[Хх]имики?',r'[Лл]аборатория']
-  shtirlez_list = [r'[Шш]тирлец',r'[Дд]етектив']
-  mihal_list = [r'[Мм]ихалыч',r'[Мм]ихайлович']
-  if any(list(map(lambda y: y!=None,list(map(lambda x : re.search(x,message.text),diller_list))))):
+  shtirliz_list = [r'[Шш]тирл[еи]ц',r'[Дд]етектив']
+  mihal_list = [r'[Мм]ихалыч',r'[Мм]ихайлович', r'[Аа]вто', r'[Гг]араж']
+  father_list = [r'[Кк]р[её]ст']
+  if any(list(map(lambda y: y!=None,list(map(lambda x : re.search(x,message.text),diler_list))))):
     logging.info('first')
+    logging.info('Активирована локация "Дилер"')
+    logging.info('Проверяем список посещенных мест {}'.format(visited_place))
+    if 'diler' in visited_place:
+      await message.answer('Мы там уже были. Не стоит оглядываться назад)')
+      return
+    visited_place.append('diler')
     await states.BotState.waiting_for_end_of_quiz.set()
-    await state.update_data(location='diller')
+    await state.update_data(location='diler')
     await first_setup(message, state)
     return
   if any(list(map(lambda y: y!=None,list(map(lambda x :re.search(x,message.text),chem_list))))):
     logging.info('second')
+    logging.info('Активирована локация "Химики"')
+    visited_place.append('chemist')
     await states.BotState.waiting_for_end_of_quiz.set()
     await state.update_data(location='chemist')
     await first_setup(message, state)
     return
-  if any(list(map(lambda y: y!=None,list(map(lambda x :re.search(x,message.text),shtirlez_list))))):
+  if any(list(map(lambda y: y!=None,list(map(lambda x :re.search(x,message.text),shtirliz_list))))):
     logging.info('third')
+    logging.info('Активирована локация "Штирлиц"')
+    visited_place.append('shtirliz')
     await states.BotState.waiting_for_end_of_quiz.set()
-    await state.update_data(location='shtirlez')
+    await state.update_data(location='shtirliz')
     await first_setup(message, state)
     return
   if any(list(map(lambda y: y!=None,list(map(lambda x :re.search(x,message.text),mihal_list))))):
     logging.info('fouth')
+    logging.info('Активирована локация "Автомастерская"')
+    visited_place.append('garage')
     await states.BotState.waiting_for_end_of_quiz.set()
-    await state.update_data(location='mihalych')
-    logging.info('Не прописан вариант с Михалычем')
-    #await first_setup(message, state)
+    await state.update_data(location='garage')
+    await first_setup(message, state)
+    return
+  if any(list(map(lambda y: y!=None,list(map(lambda x :re.search(x,message.text),father_list))))):
+    logging.info('fiveth')
+    logging.info('Активирована локация "Крёстный отец"')
+    visited_place.append('father')
+    await states.BotState.waiting_for_end_of_quiz.set()
+    await state.update_data(location='father')
+    await first_setup(message, state)
     return
   await message.answer('Извини, не нашел такой локации. Введи еще раз')
 
@@ -206,12 +231,13 @@ async def quiz(message: types.Message, state: FSMContext):
     logging.info('Текущее количество правильных ответов = {}'.format(right_answers_count))
   else:
     await message.reply('В этот раз не повезло((') #Придется выполнить наказание от Крёстного отца')
+    logging.info('Ошибочный ответ!')
   current_question_id+=1
   logging.info('После обработки сообщения: {}'.format(current_question_id))
   logging.info('Всего вопросов в данной секции: {}'.format(question.question_count))
   if current_question_id  > question.question_count:
     if right_answers_count >= 1+(question.question_count//2):
-      await message.answer('Поздравляю, ты ответила на большинство вопросов. Крестному отцу не добраться до нас!')
+      await message.answer('Поздравляю, ты ответила на большинство вопросов. Крёстному отцу не добраться до нас!')
     else: 
       await message.answer('Охх, мы допустили слишком много ошибок. Теперь придется выполить задание Крёстного отца. Таков уговор...')
     await location_set(message, state)
@@ -223,7 +249,8 @@ async def quiz(message: types.Message, state: FSMContext):
 @dp.message_handler(lambda message: not message.text.__contains__('/'), state=states.BotState.show_result)
 async def show_result(message: types.Message, state:FSMContext):
   user_data = await state.get_data()
-  await message.answer("Ты ответила на все вопросы! Поздравляю, {}!".format(user_data['username']),reply_markup=kb.remove_markup)
+  await message.answer("Ты ответила на все вопросы! Поздравляю, {}! Мы можем продолжить поиски сокровища!".format(user_data['username']),reply_markup=kb.remove_markup)
+  logging.info('Локация {} успешно пройдена'.format(user_data['location']))
   await process_cancel_cmd(message, state)
 
 
