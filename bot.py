@@ -69,7 +69,7 @@ async def greeting(message: types.Message, state = FSMContext):
   #    await message.answer('Имя не может содержать символа "/". Попробуешь еще раз?')
   #    return 
   db.UserMaster.add_user(message.text)
-  logging.info('Пользователь с именем {} начал приключение'.format(message.text))
+  logging.info('Польователь с именем {} начал приключение'.format(message.text))
   await state.update_data(username=message.text)
   await states.BotState.waiting_for_begin_of_quiz.set()
   await commands.process_help_cmd(message)
@@ -88,7 +88,7 @@ async def greeting(message: types.Message, state = FSMContext):
     md.text('Такое ощущение, будто они специально там стоят, словно в видеоигре. Может у них и задание для нас найдется? Ха-ха-ха!'),
     md.text(emojize('Но все же нам не до смеха... Нам нужно найти сокровище:moneybag:, спрятaнное где-то неподалеку. И где же оно может быть?..')), sep='\n'), reply_markup=kb.remove_markup)
   await message.answer(md.text(
-    md.text('Крёстный отец хочет, чтобы oмы играли по его правилам? Чтож, сыграем!'),
+    md.text('Крёстный отец хочет, чтобы мы играли по его правилам? Чтож, сыграем!'),
     md.text('Ты готова?!'),sep='\n'))
   await message.answer(md.text(
     md.text('Чтобы отправится в путь, нажми кнопку', md.bold(emojize('"Старт":green_circle:'))),
@@ -108,8 +108,9 @@ async def correct_begining(message: types.Message, state: FSMContext):
 async def location_set(message: types.Message, state:FSMContext):
   global visited_place
   if len(visited_place)==4:
-    await message('Мы справились со всеми заданиями. Теперь то мы точно найдем сокровище! А ты неплохой детектив!', reply_markup=kb.remove_markup)
-  await message.answer(emojize("Помоги мне сориентироваться:round_pushpin:. Как называется место, где ты находишься? Я постараюсь узнать, что приготовил для нас Крёсный отец"), reply_markup=kb.remove_markup)
+    await message.answer('Мы справились со всеми заданиями. Теперь то мы точно найдем сокровище! А ты неплохой детектив!', reply_markup=kb.remove_markup)
+    return
+  await message.answer(emojize("Навстречу приключениям! Главное не потеряться) Помоги мне сориентироваться:round_pushpin:. Как называется место, где ты находишься? Я постараюсь узнать, что приготовил для нас Крёсный отец"), reply_markup=kb.remove_markup)
   await states.BotState.waiting_for_location.set()
 
 
@@ -119,8 +120,10 @@ async def first_setup(message: types.Message, state: FSMContext):
   global current_question_id, right_answers_count
   await reset_vars()
   #await message.answer(question.media_list)
-  await message.answer(md.text('{}, сейчас тебе предстоит ответить на вопросы от хозяев этой местности.'.format(user_data['username']),
+  await message.answer(md.text('{}, сейчас тебе предстоит ответить на вопросы от хозяев локации {}.'.format(user_data['username'], user_data['location']),
     'Хитрить не выйдет. От  <b>Крёстного отца</b>, ничего не утаишь...','Удачи!', sep='\n'), reply_markup=kb.remove_markup,parse_mode=types.ParseMode.HTML) 
+  if user_data['location']=='stirlez':
+     await message.answer('Если ответишь на большинство вопросов в этой локации, то сможешь убрать один напиток и получить преимущество в соревновании со Штирлицем')
   await ask_question(message,state, current_question_id, user_data['username'], message.from_user.id,user_data['location'])
   logging.info('first setup with location = {} and message = {}'.format(user_data['location'], message.text))
 
